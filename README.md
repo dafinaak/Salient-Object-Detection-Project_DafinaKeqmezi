@@ -54,8 +54,6 @@ Salient-Object-Detection-Project_DafinaKeqmezi/
 └── checkpoints/            
 ```
 
-Direct links: [data_loader.py](data_loader.py) · [sod_model.py](sod_model.py) · [train.py](train.py) · [evaluate.py](evaluate.py) · [app.py](app.py) · [demo_notebook.ipynb](demo_notebook.ipynb)
-
 ---
 
 ## Requirements
@@ -170,6 +168,4 @@ Open [demo_notebook.ipynb](demo_notebook.ipynb) in Jupyter or Google Colab.
 ## Author
 
 **Dafina Keqmezi**
-End-to-end ML/DL project — data, model, training, evaluation, and deployment.
-
 ---
