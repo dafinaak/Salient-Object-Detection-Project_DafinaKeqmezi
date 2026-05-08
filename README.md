@@ -1,8 +1,29 @@
 # Salient Object Detection from Scratch (ECSSD)
 
-A CNN-based Salient Object Detection (SOD) system implemented entirely from scratch in PyTorch. The goal is to take any input image and produce a binary mask that highlights the most visually dominant object.
+[![Python](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-ee4c2c.svg)](https://pytorch.org/)
+[![Gradio](https://img.shields.io/badge/Demo-Gradio-orange.svg)](https://gradio.app/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](#license)
+
+A CNN-based Salient Object Detection (SOD) system implemented entirely from scratch in PyTorch. Given any input image, the model produces a binary mask that highlights the most visually dominant object.
 
 This project was completed as an end-to-end ML/DL exercise: data pipeline → model design → training loop → evaluation → experiments → live demo.
+
+---
+
+## Table of Contents
+
+- [Results](#results)
+- [Repository Structure](#repository-structure)
+- [Requirements](#requirements)
+- [Setup](#setup)
+- [Training](#training)
+- [Evaluation](#evaluation)
+- [Demo](#demo)
+- [Method](#method)
+- [Limitations and Next Steps](#limitations-and-next-steps)
+- [Author](#author)
+- [License](#license)
 
 ---
 
@@ -10,46 +31,70 @@ This project was completed as an end-to-end ML/DL exercise: data pipeline → mo
 
 Tested on the held-out 15% split of ECSSD (150 images). The improved model (BatchNorm + U-Net skip connections) substantially outperforms the baseline across every metric:
 
-| Metric    | Baseline | Improved | Δ            |
-|-----------|---------:|---------:|-------------:|
-| IoU       | 0.4294   | 0.5777   | **+34.5 %** |
-| Precision | 0.5951   | 0.6778   | +13.9 %     |
-| Recall    | 0.6458   | 0.8137   | +26.0 %     |
-| F1        | 0.5728   | 0.7076   | +23.5 %     |
-| MAE ↓     | 0.2423   | 0.1650   | −31.9 %     |
+| Metric    | Baseline | Improved |       Δ       |
+|-----------|---------:|---------:|--------------:|
+| IoU       |   0.4294 |   0.5777 | **+34.5 %**   |
+| Precision |   0.5951 |   0.6778 |     +13.9 %   |
+| Recall    |   0.6458 |   0.8137 |     +26.0 %   |
+| F1        |   0.5728 |   0.7076 |     +23.5 %   |
+| MAE ↓     |   0.2423 |   0.1650 |     −31.9 %   |
 
-Inference is ~21 ms per 128×128 image on a T4 GPU.
+Inference runs at ~21 ms per 128×128 image on a T4 GPU.
+
+**Qualitative comparison (baseline vs. improved):**
+
+![Prediction comparison](report_assets/comparison_predictions.png)
+
+**Training curves:**
+
+![Training curves](report_assets/training_curves.png)
 
 ---
 
-## Repository structure
+## Repository Structure
 
 ```
-sod-project/
-├── data_loader.py        # Dataset, augmentation, train/val/test split
-├── sod_model.py          # SODNet (baseline) and SODNetImproved
-├── train.py              # Training loop with checkpoint save/resume
-├── evaluate.py           # Test metrics + visualization
-├── app.py                # Gradio demo (standalone)
-├── demo_notebook.ipynb   # Interactive demo notebook
+Salient-Object-Detection-Project_DafinaKeqmezi/
+├── data_loader.py          
+├── sod_model.py           
+├── train.py                
+├── evaluate.py             
+├── app.py                  
+├── demo_notebook.ipynb    
 ├── requirements.txt
 ├── README.md
-└── checkpoints/          # best.pth, best_improved.pth (not tracked by git)
+├── report_assets/          
+└── checkpoints/            
 ```
+
+Direct links: [data_loader.py](data_loader.py) · [sod_model.py](sod_model.py) · [train.py](train.py) · [evaluate.py](evaluate.py) · [app.py](app.py) · [demo_notebook.ipynb](demo_notebook.ipynb)
+
+---
+
+## Requirements
+
+- Python 3.9+
+- PyTorch 2.0+ and torchvision 0.15+
+- OpenCV, NumPy, Matplotlib, scikit-learn, tqdm
+- Gradio 4.0+ (for the web demo)
+
+A CUDA-capable GPU is recommended for training; inference runs comfortably on CPU.
+
+See [requirements.txt](requirements.txt) for the full pinned list.
 
 ---
 
 ## Setup
 
 ```bash
-git clone <repo-url>
-cd sod-project
+git clone https://github.com/dafinaak/Salient-Object-Detection-Project_DafinaKeqmezi
+cd Salient-Object-Detection-Project_DafinaKeqmezi
 pip install -r requirements.txt
 ```
 
 ### Dataset
 
-Download the ECSSD dataset (1000 image+mask pairs). The expected layout is:
+Download the ECSSD dataset (1000 image + mask pairs). The expected layout is:
 
 ```
 data/ECSSD/
@@ -102,19 +147,21 @@ python app.py --ckpt checkpoints/best_improved.pth --share
 
 Generates a public share link valid for 7 days.
 
+![Gradio demo screenshot](report_assets/demo_screenshot.png)
+
 ### Option 2 — Interactive notebook
 
-Open `demo_notebook.ipynb` in Jupyter / Colab.
+Open [demo_notebook.ipynb](demo_notebook.ipynb) in Jupyter or Google Colab.
 
 ---
 
 ## Method
 
-**Architecture (improved model).** Encoder–decoder U-Net with 4 down-sampling stages, a 512-channel bottleneck, and 4 up-sampling stages. Each level has a Conv→BatchNorm→ReLU block. Encoder feature maps are concatenated into the matching decoder level (skip connections), which lets the decoder use both abstract semantic features and precise spatial detail.
+**Architecture (improved model).** Encoder–decoder U-Net with 4 down-sampling stages, a 512-channel bottleneck, and 4 up-sampling stages. Each level has a Conv → BatchNorm → ReLU block. Encoder feature maps are concatenated into the matching decoder level (skip connections), which lets the decoder use both abstract semantic features and precise spatial detail.
 
-- Input: 3 × 128 × 128 RGB
-- Output: 1 × 128 × 128 sigmoid saliency map
-- Parameters: 3.84 M
+- **Input:** 3 × 128 × 128 RGB
+- **Output:** 1 × 128 × 128 sigmoid saliency map
+- **Parameters:** 3.84 M
 
 **Loss.** Binary cross-entropy + 0.5 × (1 − soft IoU). BCE alone tends to favor predicting "all background" early in training; adding the IoU term pulls predictions toward better region overlap.
 
@@ -122,11 +169,11 @@ Open `demo_notebook.ipynb` in Jupyter / Colab.
 
 **Augmentation.** Horizontal flip, brightness jitter, and random crop — applied only to the training split. Geometric augmentations are applied identically to image and mask.
 
-**Bonus: resumable training.** Every epoch saves `last.pth` (model weights, optimizer state, current epoch, history). On restart, the script detects the checkpoint and resumes seamlessly.
+**Resumable training.** Every epoch saves `last.pth` (model weights, optimizer state, current epoch, history). On restart, the script detects the checkpoint and resumes seamlessly.
 
 ---
 
-## Limitations and next steps
+## Limitations and Next Steps
 
 - Trained on ECSSD only (700 training images) — using DUTS-TR (~10,500) would substantially improve generalization.
 - 128 × 128 resolution loses fine detail — moving to 224 × 224 with the same architecture is a one-line change.
@@ -135,6 +182,9 @@ Open `demo_notebook.ipynb` in Jupyter / Colab.
 
 ---
 
-## License
+## Author
 
-Educational project. ECSSD dataset: see the dataset's own license.
+**Dafina Keqmezi**
+End-to-end ML/DL project — data, model, training, evaluation, and deployment.
+
+---

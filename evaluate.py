@@ -1,25 +1,3 @@
-"""
-evaluate.py
-===========
-Evaluation script for the trained Salient Object Detection model.
-
-Computes test-set metrics:
-    * IoU (Intersection over Union)
-    * Precision
-    * Recall
-    * F1-Score
-    * MAE (Mean Absolute Error, on the soft prediction)
-
-Also produces sample visualizations:
-    * Input image
-    * Ground-truth mask
-    * Predicted mask
-    * Overlay (red on input)
-
-Usage:
-    python evaluate.py --img_dir <path> --mask_dir <path> --ckpt <path-to-best.pth>
-"""
-
 import argparse
 import os
 
@@ -32,9 +10,6 @@ from data_loader import get_loaders
 from sod_model import SODNet, SODNetImproved
 
 
-# ---------------------------------------------------------------------------
-# Metrics
-# ---------------------------------------------------------------------------
 def compute_metrics(model, loader, device, threshold=0.5, eps=1e-6):
     """
     Compute mean IoU, Precision, Recall, F1, MAE across all images in ``loader``.
@@ -78,9 +53,6 @@ def compute_metrics(model, loader, device, threshold=0.5, eps=1e-6):
     }
 
 
-# ---------------------------------------------------------------------------
-# Visualization helpers
-# ---------------------------------------------------------------------------
 def overlay_mask(img_np, mask_np, color=(255, 0, 0), alpha=0.5):
     """Blend ``mask_np`` (binary) onto ``img_np`` in the given color."""
     overlay = img_np.copy()
@@ -125,9 +97,6 @@ def visualize_predictions(model, loader, device, n=6, save_path=None):
     plt.show()
 
 
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--img_dir", required=True)
@@ -143,23 +112,19 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
 
-    # ----- data -----
     _, _, test_loader = get_loaders(args.img_dir, args.mask_dir)
 
-    # ----- model -----
     ModelCls = SODNetImproved if args.improved else SODNet
     model = ModelCls().to(device)
     ckpt = torch.load(args.ckpt, map_location=device, weights_only=False)
     model.load_state_dict(ckpt["model"])
     print(f"Loaded {ModelCls.__name__} from epoch {ckpt['epoch']}")
 
-    # ----- metrics -----
     metrics = compute_metrics(model, test_loader, device)
     print("\n--- Test set results ---")
     for k, v in metrics.items():
         print(f"  {k:10s}: {v:.4f}")
 
-    # ----- visualization -----
     visualize_predictions(model, test_loader, device, n=args.n_viz, save_path=args.save_viz)
 
 

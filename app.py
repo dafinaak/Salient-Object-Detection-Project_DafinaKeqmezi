@@ -1,17 +1,3 @@
-"""
-app.py
-======
-Gradio demo for the trained Salient Object Detection model.
-
-The user uploads any image; the app:
-    1. Resizes to 128x128.
-    2. Runs the improved model.
-    3. Displays the predicted saliency mask, an overlay, and the inference time.
-
-Usage:
-    python app.py --ckpt path/to/best_improved.pth
-"""
-
 import argparse
 import time
 
@@ -37,21 +23,17 @@ def build_predict_fn(ckpt_path):
         if input_image is None:
             return None, None, "Please upload an image."
 
-        # ----- preprocess -----
         img_resized = cv2.resize(input_image, (128, 128))
         img_tensor = torch.from_numpy(img_resized.astype(np.float32) / 255.0)
         img_tensor = img_tensor.permute(2, 0, 1).unsqueeze(0).to(device)
 
-        # ----- inference (timed) -----
         t0 = time.perf_counter()
         with torch.no_grad():
             pred = model(img_tensor)
         inference_ms = (time.perf_counter() - t0) * 1000
 
-        # ----- postprocess -----
         mask = (pred[0, 0].cpu().numpy() > 0.5).astype(np.uint8) * 255
 
-        # red overlay
         overlay = img_resized.copy()
         red = np.zeros_like(img_resized)
         red[..., 0] = 255

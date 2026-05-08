@@ -1,20 +1,3 @@
-"""
-train.py
-========
-Training script for the Salient Object Detection model.
-
-Implements:
-    * Forward + backward passes with the BCE + 0.5 * (1 - IoU) loss.
-    * Validation after each epoch.
-    * Saving 'last' checkpoint every epoch (for resume) and 'best'
-      checkpoint when validation loss improves.
-    * Bonus: automatic resume from the last checkpoint if it exists.
-    * Early stopping when val_loss has not improved for N epochs.
-
-Usage:
-    python train.py --img_dir <path> --mask_dir <path> [--improved]
-"""
-
 import argparse
 import csv
 import os
@@ -28,9 +11,6 @@ from data_loader import get_loaders
 from sod_model import SODNet, SODNetImproved
 
 
-# ---------------------------------------------------------------------------
-# Loss + metric
-# ---------------------------------------------------------------------------
 def iou_score(pred, target, eps=1e-6, threshold=0.5):
     """IoU on binarized predictions - used as a *metric* (no gradients)."""
     pred_bin = (pred > threshold).float()
@@ -48,9 +28,6 @@ def bce_iou_loss(pred, target, eps=1e-6):
     return bce + 0.5 * (1 - iou.mean())
 
 
-# ---------------------------------------------------------------------------
-# Checkpoint helpers (bonus task: resumable training)
-# ---------------------------------------------------------------------------
 def save_checkpoint(state, path):
     torch.save(state, path)
     print(f"   [SAVE] checkpoint -> {os.path.basename(path)}")
@@ -63,9 +40,6 @@ def load_checkpoint(path, model, optimizer, device):
     return ckpt["epoch"], ckpt["best_val_loss"], ckpt.get("history", [])
 
 
-# ---------------------------------------------------------------------------
-# Main training loop
-# ---------------------------------------------------------------------------
 def train(img_dir, mask_dir, ckpt_dir,
           improved=False,
           num_epochs=25, lr=1e-3, batch_size=16,
@@ -80,18 +54,15 @@ def train(img_dir, mask_dir, ckpt_dir,
     best_ckpt = os.path.join(ckpt_dir, f"best{suffix}.pth")
     log_csv = os.path.join(ckpt_dir, f"training_log{suffix}.csv")
 
-    # ----- data -----
     train_loader, val_loader, _ = get_loaders(
         img_dir, mask_dir, img_size=img_size, batch_size=batch_size, seed=seed,
     )
 
-    # ----- model + optimizer -----
     ModelCls = SODNetImproved if improved else SODNet
     model = ModelCls().to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     print(f"Model: {ModelCls.__name__} ({sum(p.numel() for p in model.parameters()):,} parameters)")
 
-    # ----- resume if checkpoint exists (BONUS) -----
     start_epoch, best_val_loss, history = 0, float("inf"), []
     if os.path.exists(last_ckpt):
         start_epoch, best_val_loss, history = load_checkpoint(
@@ -104,11 +75,9 @@ def train(img_dir, mask_dir, ckpt_dir,
 
     epochs_no_improve = 0
 
-    # ----- training loop -----
     for epoch in range(start_epoch, num_epochs):
         t0 = time.time()
 
-        # --- TRAIN ---
         model.train()
         train_loss_sum, train_iou_sum, n = 0.0, 0.0, 0
         pbar = tqdm(train_loader, desc=f"Epoch {epoch + 1}/{num_epochs} [train]")
@@ -129,7 +98,7 @@ def train(img_dir, mask_dir, ckpt_dir,
         train_loss = train_loss_sum / n
         train_iou = train_iou_sum / n
 
-        # --- VALIDATE ---
+
         model.eval()
         val_loss_sum, val_iou_sum, n = 0.0, 0.0, 0
         with torch.no_grad():
@@ -154,7 +123,6 @@ def train(img_dir, mask_dir, ckpt_dir,
             "val_loss": val_loss, "val_iou": val_iou,
         })
 
-        # --- save 'last' (resume point) every epoch ---
         save_checkpoint({
             "epoch": epoch + 1,
             "model": model.state_dict(),
@@ -163,7 +131,6 @@ def train(img_dir, mask_dir, ckpt_dir,
             "history": history,
         }, last_ckpt)
 
-        # --- save 'best' if validation improved ---
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             epochs_no_improve = 0
@@ -182,7 +149,6 @@ def train(img_dir, mask_dir, ckpt_dir,
                 print(f"[EARLY STOP] val_loss has not improved for {early_stop_patience} epochs.")
                 break
 
-    # ----- write training log to CSV -----
     with open(log_csv, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=["epoch", "train_loss", "train_iou", "val_loss", "val_iou"])
         w.writeheader()
