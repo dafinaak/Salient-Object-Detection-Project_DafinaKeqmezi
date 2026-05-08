@@ -1,10 +1,5 @@
 # Salient Object Detection from Scratch (ECSSD)
 
-[![Python](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-ee4c2c.svg)](https://pytorch.org/)
-[![Gradio](https://img.shields.io/badge/Demo-Gradio-orange.svg)](https://gradio.app/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](#license)
-
 A CNN-based Salient Object Detection (SOD) system implemented entirely from scratch in PyTorch. Given any input image, the model produces a binary mask that highlights the most visually dominant object.
 
 This project was completed as an end-to-end ML/DL exercise: data pipeline → model design → training loop → evaluation → experiments → live demo.
