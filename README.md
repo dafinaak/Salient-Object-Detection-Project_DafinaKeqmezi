@@ -36,14 +36,6 @@ Tested on the held-out 15% split of ECSSD (150 images). The improved model (Batc
 
 Inference runs at ~21 ms per 128×128 image on a T4 GPU.
 
-**Qualitative comparison (baseline vs. improved):**
-
-![Prediction comparison](report_assets/comparison_predictions.png)
-
-**Training curves:**
-
-![Training curves](report_assets/training_curves.png)
-
 ---
 
 ## Repository Structure
@@ -141,8 +133,6 @@ python app.py --ckpt checkpoints/best_improved.pth --share
 ```
 
 Generates a public share link valid for 7 days.
-
-![Gradio demo screenshot](report_assets/demo_screenshot.png)
 
 ### Option 2 — Interactive notebook
 
